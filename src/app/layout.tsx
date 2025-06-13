@@ -1,7 +1,12 @@
+"use client";
 import "./globals.css";
 import { LoadingProvider } from "@/context/loadingContext";
 import { AuthProvider } from "@/context/authContext";
-import { Bounce, ToastContainer } from "react-toastify";
+import { Bounce, toast, ToastContainer } from "react-toastify";
+import SideNavbar from "@/components/common/Sidebar";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { BiExit, BiMenu } from "react-icons/bi";
 
 export default function RootLayout({
   children,
@@ -15,7 +20,6 @@ export default function RootLayout({
         <title>Admin Panel | Vedantaastro</title>
         <meta name="description" content="Admin Panel for Vedantaastro" />
         <link rel="icon" href="/logo.png" />
-
       </head>
       <body>
         <ToastContainer
@@ -33,7 +37,7 @@ export default function RootLayout({
         />
         <LoadingProvider>
           <AuthProvider>
-            {children}
+            <SideNavbar children={children} />
           </AuthProvider>
         </LoadingProvider>
       </body>
