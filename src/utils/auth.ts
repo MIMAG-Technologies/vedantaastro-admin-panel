@@ -1,9 +1,24 @@
 import axios from "axios";
+import { header } from "./header";
 
 type Admin = {
   id: string;
   name: string;
   email: string;
+};
+
+// Safe localStorage access
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("vedantaastro-admin-token");
+  }
+  return null;
+};
+
+const setToken = (token: string) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("vedantaastro-admin-token", token);
+  }
 };
 
 export const setOTP = async (
@@ -34,6 +49,7 @@ export const setOTP = async (
     }
   }
 };
+
 export const verifyOTP = async (
   email: string,
   otp: number
@@ -50,7 +66,7 @@ export const verifyOTP = async (
         otp,
       }
     );
-    localStorage.setItem("vedantaastro-admin-token", response.data.token);
+    setToken(response.data.token);
     return {
       success: true,
       message: "OTP verified successfully",
@@ -75,13 +91,14 @@ export const verifyOTP = async (
     }
   }
 };
+
 export const checkAdmin = async (): Promise<{
   success: boolean;
   message: string;
   admin?: Admin;
 }> => {
   try {
-    const token = localStorage.getItem("vedantaastro-admin-token");
+    const token = getToken();
     if (!token) {
       return {
         success: false,
@@ -90,11 +107,7 @@ export const checkAdmin = async (): Promise<{
     }
     const response = await axios.get(
       `${process.env.NEXT_PUBLIC_API_URL}/admin/login`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      header()
     );
     return {
       success: true,

@@ -9,6 +9,13 @@ type Admin = {
     email: string;
 };
 
+// Safe localStorage access
+const removeToken = () => {
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem("vedantaastro-admin-token");
+    }
+};
+
 interface AuthContextType {
     admin: Admin | null;
     isAuthenticated: boolean;
@@ -63,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = () => {
-        localStorage.removeItem("vedantaastro-admin-token");
+        removeToken();
         setAdmin(null);
         setIsAuthenticated(false);
     };
@@ -79,12 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setAdmin(null);
                 setIsAuthenticated(false);
                 // Clear invalid token
-                localStorage.removeItem("vedantaastro-admin-token");
+                removeToken();
             }
         } catch (error) {
             setAdmin(null);
             setIsAuthenticated(false);
-            localStorage.removeItem("vedantaastro-admin-token");
+            removeToken();
         } finally {
             setLoading(false);
         }

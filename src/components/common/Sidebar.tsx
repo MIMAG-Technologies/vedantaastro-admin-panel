@@ -49,7 +49,9 @@ export default function SideNavbar({
     const router = useRouter();
 
     const handleLogout = () => {
-        localStorage.removeItem("vedantaastro-admin-token");
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem("vedantaastro-admin-token");
+        }
         toast.success("Logged out Successfully!");
         router.push("/auth");
     };
