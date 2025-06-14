@@ -2,17 +2,16 @@
 import "./globals.css";
 import { LoadingProvider } from "@/context/loadingContext";
 import { AuthProvider } from "@/context/authContext";
-import { Bounce, toast, ToastContainer } from "react-toastify";
+import { Bounce, ToastContainer } from "react-toastify";
 import SideNavbar from "@/components/common/Sidebar";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { BiExit, BiMenu } from "react-icons/bi";
+import { usePathname } from "next/navigation";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
 
   return (
     <html lang="en">
@@ -37,7 +36,7 @@ export default function RootLayout({
         />
         <LoadingProvider>
           <AuthProvider>
-            <SideNavbar children={children} />
+            {pathname === "/auth" ? children : <SideNavbar children={children} />}
           </AuthProvider>
         </LoadingProvider>
       </body>
