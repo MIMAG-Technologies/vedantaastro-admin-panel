@@ -34,7 +34,7 @@ import {
     FaCoins
 } from "react-icons/fa";
 import { BiExit, BiMenu, BiX } from "react-icons/bi";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { useAuth } from "@/context/authContext";
 
 export default function SideNavbar({

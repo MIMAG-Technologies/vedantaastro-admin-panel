@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/authContext";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { Mail, Lock, ArrowLeft, Shield } from "lucide-react";
 import { useLoading } from "@/context/loadingContext";
 

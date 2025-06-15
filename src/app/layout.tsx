@@ -2,9 +2,9 @@
 import "./globals.css";
 import { LoadingProvider } from "@/context/loadingContext";
 import { AuthProvider } from "@/context/authContext";
-import { Bounce, ToastContainer } from "react-toastify";
 import SideNavbar from "@/components/common/Sidebar";
 import { usePathname } from "next/navigation";
+import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({
   children,
@@ -21,19 +21,7 @@ export default function RootLayout({
         <link rel="icon" href="/logo.png" />
       </head>
       <body>
-        <ToastContainer
-          position="top-center"
-          autoClose={2000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover={false}
-          theme="light"
-          transition={Bounce}
-        />
+        <Toaster position="top-right" />
         <LoadingProvider>
           <AuthProvider>
             {pathname === "/auth" ? children : <SideNavbar children={children} />}
