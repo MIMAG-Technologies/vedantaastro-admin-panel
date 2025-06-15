@@ -30,7 +30,6 @@ import {
     FaPray,
     FaMailBulk,
     FaLanguage,
-    FaUserFriends,
     FaWallet,
     FaCoins
 } from "react-icons/fa";
@@ -125,7 +124,6 @@ export default function SideNavbar({
             items: [
                 { name: "Centers", icon: <FaBuilding />, path: "/centers" },
                 { name: "Languages", icon: <FaLanguage />, path: "/languages" },
-                { name: "Gender", icon: <FaUserFriends />, path: "/gender" }
             ]
         },
         {
