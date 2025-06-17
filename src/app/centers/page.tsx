@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Center, CreateCenterArgs, DetaileCenter } from "@/types/centers";
 import { createCenter, deleteCenter, getCenters, getOneCenter, updateCenter } from "@/utils/centers";
 import { useLoading } from "@/context/loadingContext";
@@ -7,7 +7,7 @@ import { FiEdit, FiTrash2, FiPlus, FiSearch } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Centers() {
+function CentersContent() {
     const searchParams = useSearchParams();
     const [centers, setCenters] = useState<Center[]>([]);
     const [filteredCenters, setFilteredCenters] = useState<Center[]>([]);
@@ -627,5 +627,13 @@ export default function Centers() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function Centers() {
+    return (
+        <Suspense fallback={<div className="container mx-auto p-4 max-w-7xl">Loading...</div>}>
+            <CentersContent />
+        </Suspense>
     );
 } 
