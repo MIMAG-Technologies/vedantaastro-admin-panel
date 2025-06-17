@@ -12,9 +12,12 @@ const createCenter = async (center: CreateCenterArgs): Promise<boolean> => {
   }
 };
 
-const getCenters = async (): Promise<Center[]> => {
+const getCenters = async (is_active: boolean): Promise<Center[]> => {
   try {
-    const response = await axios.get(`${baseUrl}/center`, header());
+    const response = await axios.get(
+      `${baseUrl}/center?is_active=${is_active}`,
+      header()
+    );
     return response.data.centers;
   } catch (error) {
     return [];

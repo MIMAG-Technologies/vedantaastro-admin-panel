@@ -3,12 +3,17 @@ import { useEffect, useState } from "react";
 import { Center, CreateCenterArgs, DetaileCenter } from "@/types/centers";
 import { createCenter, deleteCenter, getCenters, getOneCenter, updateCenter } from "@/utils/centers";
 import { useLoading } from "@/context/loadingContext";
-import { FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiPlus, FiSearch } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Centers() {
+    const searchParams = useSearchParams();
     const [centers, setCenters] = useState<Center[]>([]);
+    const [filteredCenters, setFilteredCenters] = useState<Center[]>([]);
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
     const { setLoading } = useLoading();
+    const [is_active, setIs_active] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -27,14 +32,51 @@ export default function Centers() {
 
     useEffect(() => {
         const fetchCenters = async () => {
-            const fetchedCenters = await getCenters();
+            const fetchedCenters = await getCenters(is_active);
             setCenters(fetchedCenters);
+            setFilteredCenters(fetchedCenters);
             setLoading(false);
         }
 
         setLoading(true);
         fetchCenters();
-    }, []);
+    }, [is_active]);
+
+    // Apply search filtering
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setFilteredCenters(centers);
+            return;
+        }
+
+        const query = searchQuery.toLowerCase().trim();
+        const filtered = centers.filter(center =>
+            center.name.toLowerCase().includes(query) ||
+            center.city.toLowerCase().includes(query) ||
+            center.state.toLowerCase().includes(query) ||
+            center.pincode.toLowerCase().includes(query) ||
+            center.contact_number.toLowerCase().includes(query)
+        );
+
+        setFilteredCenters(filtered);
+    }, [searchQuery, centers]);
+
+    // Update URL when search query changes
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (searchQuery) {
+            params.set("q", searchQuery);
+        } else {
+            params.delete("q");
+        }
+
+        const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+        window.history.replaceState({}, '', newUrl);
+    }, [searchQuery]);
+
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -142,8 +184,9 @@ export default function Centers() {
                 google_maps_link: "",
             });
             // Refresh centers list
-            const updatedCenters = await getCenters();
+            const updatedCenters = await getCenters(is_active);
             setCenters(updatedCenters);
+            setFilteredCenters(updatedCenters);
         } else {
             toast.error("Failed to create center");
         }
@@ -187,8 +230,9 @@ export default function Centers() {
             toast.success("Center updated successfully");
             setShowEditModal(false);
             // Refresh centers list
-            const updatedCenters = await getCenters();
+            const updatedCenters = await getCenters(is_active);
             setCenters(updatedCenters);
+            setFilteredCenters(updatedCenters);
         } else {
             toast.error("Failed to update center");
         }
@@ -210,8 +254,9 @@ export default function Centers() {
             toast.success("Center deleted successfully");
             setShowDeleteModal(false);
             // Refresh centers list
-            const updatedCenters = await getCenters();
+            const updatedCenters = await getCenters(is_active);
             setCenters(updatedCenters);
+            setFilteredCenters(updatedCenters);
         } else {
             toast.error("Failed to delete center");
         }
@@ -222,16 +267,45 @@ export default function Centers() {
         <div className="container mx-auto p-4 max-w-7xl">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold tracking-tight text-gray-800">Centers</h1>
-                <button
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-indigo-500 bg-indigo-50 text-indigo-700 font-medium hover:bg-indigo-100 transition"
-                    onClick={() => setShowCreateModal(true)}
-                >
-                    <FiPlus className="text-lg" /> Add Center
-                </button>
+
+                <div className="flex items-center gap-4">
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <FiSearch className="text-gray-400" />
+                        </div>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={handleSearch}
+                            placeholder="Search by name, city, state..."
+                            className="py-2 pl-10 pr-4 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 w-64"
+                        />
+                    </div>
+                    <button
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-indigo-500 bg-indigo-50 text-indigo-700 font-medium hover:bg-indigo-100 transition"
+                        onClick={() => setShowCreateModal(true)}
+                    >
+                        <FiPlus className="text-lg" /> Add Center
+                    </button>
+                    <select
+                        className="px-6 py-2 rounded-lg border border-indigo-500 bg-indigo-50 text-indigo-700 font-medium hover:bg-indigo-100 transition"
+                        value={is_active ? "Active" : "All"}
+                        onChange={(e) => setIs_active(e.target.value === "Active")}
+                    >
+                        <option value="Active">Active</option>
+                        <option value="All">All</option>
+                    </select>
+                </div>
             </div>
 
+            {filteredCenters.length === 0 && searchQuery && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-center">
+                    <p className="text-yellow-700">No centers found matching "{searchQuery}". Try a different search term.</p>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {centers.map((center) => (
+                {filteredCenters.map((center) => (
                     <div key={center.id} className="flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition">
                         <div className="rounded-t-xl overflow-hidden mb-3">
                             <iframe
