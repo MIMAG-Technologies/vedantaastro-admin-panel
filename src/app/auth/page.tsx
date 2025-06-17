@@ -11,6 +11,7 @@ export default function AuthPage() {
     const [otp, setOtp] = useState("");
     const [step, setStep] = useState<"email" | "otp">("email");
     const { isLoading, setLoading } = useLoading();
+    const [isLoggedIn, setIsLoggedIn] = useState(false)
 
     const { sendOTP, login, isAuthenticated } = useAuth();
     const router = useRouter();
@@ -77,6 +78,7 @@ export default function AuthPage() {
 
             if (result.success) {
                 toast.success(result.message || "Login successful!");
+                setIsLoggedIn(true)
                 router.push("/dashboard");
             } else {
                 toast.error(result.message || "Invalid OTP");
@@ -230,17 +232,21 @@ export default function AuthPage() {
                                     disabled={isLoading}
                                     className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
                                 >
-                                    {isLoading ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                            Verifying...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Lock className="w-4 h-4 mr-2" />
-                                            Verify & Login
-                                        </>
-                                    )}
+                                    {isLoggedIn ? <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Redirecting...
+                                    </> :
+                                        isLoading ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                Verifying...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Lock className="w-4 h-4 mr-2" />
+                                                Verify & Login
+                                            </>
+                                        )}
                                 </button>
                             </div>
                         </form>

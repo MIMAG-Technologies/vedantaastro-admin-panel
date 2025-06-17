@@ -46,11 +46,10 @@ export default function SideNavbar({
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [expandedGroups, setExpandedGroups] = useState(["overview", "users"]);
     const router = useRouter();
+    const { logout } = useAuth();
 
     const handleLogout = () => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem("vedantaastro-admin-token");
-        }
+        logout()
         toast.success("Logged out Successfully!");
         router.push("/auth");
     };
