@@ -146,7 +146,7 @@ function UserFormContent() {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-20 p-4 overflow-y-auto">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-md animate-fadeIn relative">
                 {/* Header */}
                 <div className="bg-indigo-600 text-white p-5 rounded-t-xl flex justify-between items-center">

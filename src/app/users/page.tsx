@@ -2,7 +2,7 @@
 import { useLoading } from "@/context/loadingContext";
 import { User } from "@/types/user";
 import { GetAllUsers } from "@/utils/user";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { FiSearch, FiPlus, FiUser, FiCalendar, FiEdit, FiEye, FiMail, FiPhone, FiFilter, FiX } from "react-icons/fi";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -13,15 +13,27 @@ function UsersContent() {
     const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
     const [limit, setLimit] = useState(parseInt(searchParams.get("limit") || "10"));
     const [query, setQuery] = useState(searchParams.get("q") || "");
+    const [debouncedQuery, setDebouncedQuery] = useState(query);
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const { setLoading } = useLoading();
     const [showViewModal, setShowViewModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+    // Debounce search query
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedQuery(query);
+        }, 200);
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [query]);
+
     useEffect(() => {
         const fetchUsers = async () => {
-            const response = await GetAllUsers(page, limit, query);
+            const response = await GetAllUsers(page, limit, debouncedQuery);
             if (response.success) {
                 setUsers(response.users);
                 setTotal(response.total);
@@ -31,14 +43,14 @@ function UsersContent() {
         };
         setLoading(true);
         fetchUsers();
-    }, [page, limit, query, setLoading]);
+    }, [page, limit, debouncedQuery, setLoading]);
 
     // Update URL when search query, page or limit changes
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
 
-        if (query) {
-            params.set("q", query);
+        if (debouncedQuery) {
+            params.set("q", debouncedQuery);
         } else {
             params.delete("q");
         }
@@ -48,7 +60,7 @@ function UsersContent() {
 
         const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
         window.history.replaceState({}, '', newUrl);
-    }, [query, page, limit]);
+    }, [debouncedQuery, page, limit]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -125,9 +137,18 @@ function UsersContent() {
                     </div>
                 </div>
 
-                {users.length === 0 && query && (
+                {users.length === 0 && debouncedQuery && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-center">
-                        <p className="text-yellow-700">No users found matching "{query}". Try a different search term.</p>
+                        <p className="text-yellow-700">No users found matching "{debouncedQuery}". Try a different search term.</p>
+                    </div>
+                )}
+
+                {query !== debouncedQuery && (
+                    <div className="mb-4 flex items-center justify-center">
+                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm">
+                            <div className="mr-2 h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+                            Searching...
+                        </div>
                     </div>
                 )}
 
