@@ -8,6 +8,7 @@ export type Service = {
   updated_at: string;
   is_active: boolean;
   thumbnail_img: string | null;
+  slug: string;
 };
 
 export type CreateServiceArgs = {
