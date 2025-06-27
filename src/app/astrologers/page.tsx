@@ -25,7 +25,7 @@ import {
 } from 'react-icons/fi';
 import { useLoading } from '@/context/loadingContext';
 import { Astrologer } from '@/types/astrologer';
-import { getAstrologerList } from '@/utils/astrologer';
+import { getAstrologerList, deactivateAstrologer, reactivateAstrologer, onBoardingAstrologer } from '@/utils/astrologer';
 
 // Custom Dropdown Component
 interface DropdownMenuProps {
@@ -70,7 +70,7 @@ function DropdownMenuItem({ children, onClick, className = "", icon }: DropdownM
     return (
         <button
             onClick={onClick}
-            className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${className}`}
+            className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer flex items-center gap-2 ${className}`}
         >
             {icon && <span className="w-4 h-4">{icon}</span>}
             {children}
@@ -98,6 +98,11 @@ function AstrologersContent() {
     const { setLoading } = useLoading();
     const [showViewModal, setShowViewModal] = useState(false);
     const [selectedAstrologer, setSelectedAstrologer] = useState<Astrologer | null>(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<{
+        type: 'activate' | 'deactivate' | 'onboard';
+        astrologer: Astrologer;
+    } | null>(null);
 
     // Debounce search query
     useEffect(() => {
@@ -188,29 +193,68 @@ function AstrologersContent() {
                 openViewModal(astrologer);
                 break;
             case 'edit-basic':
-                router.push(`/astrologers/edit/${astrologer.id}?tab=basic`);
+                router.push(`/astrologers/edit/basic?id=${astrologer.id}`);
                 break;
             case 'edit-services':
-                router.push(`/astrologers/edit/${astrologer.id}?tab=services`);
+                router.push(`/astrologers/edit/service?id=${astrologer.id}`);
                 break;
             case 'edit-schedule':
-                router.push(`/astrologers/edit/${astrologer.id}?tab=schedule`);
+                router.push(`/astrologers/edit/schedule?id=${astrologer.id}`);
                 break;
             case 'edit-ratings':
-                router.push(`/astrologers/edit/${astrologer.id}?tab=ratings`);
+                router.push(`/astrologers/edit/rating?id=${astrologer.id}`);
                 break;
             case 'toggle-status':
-                // TODO: Implement toggle status API call
-                toast.success(`Toggle status for ${astrologer.full_name}`);
+                setConfirmAction({
+                    type: astrologer.is_active ? 'deactivate' : 'activate',
+                    astrologer: astrologer
+                });
+                setShowConfirmModal(true);
                 break;
             case 'onboard':
-                // TODO: Implement onboard functionality
-                toast.success(`Onboard ${astrologer.full_name}`);
+                setConfirmAction({
+                    type: 'onboard',
+                    astrologer: astrologer
+                });
+                setShowConfirmModal(true);
                 break;
             default:
                 break;
         }
     };
+
+    const handleConfirmAction = async () => {
+        if (!confirmAction) return;
+
+        setLoading(true);
+        try {
+            let response;
+
+            if (confirmAction.type === 'activate') {
+                response = await reactivateAstrologer(confirmAction.astrologer.id);
+            } else if (confirmAction.type === 'deactivate') {
+                response = await deactivateAstrologer(confirmAction.astrologer.id);
+            } else if (confirmAction.type === 'onboard') {
+                response = await onBoardingAstrologer(confirmAction.astrologer.id);
+            }
+
+            if (response?.success) {
+                toast.success(response.message);
+                // Refresh the list
+                fetchAstrologers();
+            } else {
+                toast.error(response?.message || `Failed to ${confirmAction.type} astrologer`);
+            }
+        } catch (error) {
+            toast.error(`Failed to ${confirmAction.type} astrologer`);
+        } finally {
+            setLoading(false);
+            setShowConfirmModal(false);
+            setConfirmAction(null);
+        }
+    };
+
+
 
     return (
         <div className="mx-auto">
@@ -277,8 +321,8 @@ function AstrologersContent() {
 
                 {query !== debouncedQuery && (
                     <div className="mb-4 flex items-center justify-center">
-                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm">
-                            <div className="mr-2 h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-sm">
+                            <div className="mr-2 h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></div>
                             Searching...
                         </div>
                     </div>
@@ -361,7 +405,7 @@ function AstrologersContent() {
                                                 {astrologer.is_active ? 'Active' : 'Inactive'}
                                             </span>
                                             {astrologer.is_verified && (
-                                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">
                                                     <FiShield className="mr-1" size={10} /> Verified
                                                 </span>
                                             )}
@@ -419,7 +463,7 @@ function AstrologersContent() {
                                                 <DropdownMenuItem
                                                     onClick={() => handleActionClick('onboard', astrologer)}
                                                     icon={<FiDollarSign />}
-                                                    className="text-blue-600"
+                                                    className="text-indigo-600"
                                                 >
                                                     On Board
                                                 </DropdownMenuItem>
@@ -505,6 +549,57 @@ function AstrologersContent() {
                 </div>
             </div>
 
+            {/* Confirmation Modal */}
+            {showConfirmModal && confirmAction && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+                        <div className="p-6">
+                            <div className={`flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full ${confirmAction.type === 'activate' ? 'bg-green-100' :
+                                confirmAction.type === 'deactivate' ? 'bg-red-100' :
+                                    'bg-indigo-100'
+                                }`}>
+                                {confirmAction.type === 'activate' ? <FiUserCheck className="w-6 h-6 text-green-600" /> :
+                                    confirmAction.type === 'deactivate' ? <FiUserX className="w-6 h-6 text-red-600" /> :
+                                        <FiDollarSign className="w-6 h-6 text-indigo-600" />}
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 text-center mb-2">
+                                {confirmAction.type === 'activate' ? 'Activate' :
+                                    confirmAction.type === 'deactivate' ? 'Deactivate' :
+                                        'Onboard'} Astrologer
+                            </h3>
+                            <p className="text-sm text-gray-500 text-center mb-6">
+                                Are you sure you want to {confirmAction.type} <strong>{confirmAction.astrologer.full_name}</strong>?
+                                {confirmAction.type === 'deactivate' && ' This will prevent them from taking new consultations.'}
+                                {confirmAction.type === 'activate' && ' They will be able to take consultations again.'}
+                                {confirmAction.type === 'onboard' && ' This will complete the onboarding process for this astrologer.'}
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowConfirmModal(false);
+                                        setConfirmAction(null);
+                                    }}
+                                    className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConfirmAction}
+                                    className={`flex-1 px-4 py-2 text-white rounded-md transition ${confirmAction.type === 'activate' ? 'bg-green-600 hover:bg-green-700' :
+                                        confirmAction.type === 'deactivate' ? 'bg-red-600 hover:bg-red-700' :
+                                            'bg-indigo-600 hover:bg-indigo-700'
+                                        }`}
+                                >
+                                    {confirmAction.type === 'activate' ? 'Activate' :
+                                        confirmAction.type === 'deactivate' ? 'Deactivate' :
+                                            'Onboard'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* View Astrologer Modal */}
             {showViewModal && selectedAstrologer && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -536,7 +631,7 @@ function AstrologersContent() {
                                         {selectedAstrologer.is_active ? 'Active' : 'Inactive'}
                                     </span>
                                     {selectedAstrologer.is_verified && (
-                                        <span className="px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        <span className="px-3 py-1 text-sm font-semibold rounded-full bg-indigo-100 text-indigo-800">
                                             Verified
                                         </span>
                                     )}
